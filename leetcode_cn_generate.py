@@ -250,7 +250,7 @@ class Leetcode:
             result = 'English:\n'
             result += pq(question['content']).text()
             result += '\n\n'
-            result += '涓�鏂�:\n'
+            result += '中文:\n'
             result += pq(question['translatedContent']).text()
             return result
 
