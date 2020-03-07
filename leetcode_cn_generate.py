@@ -412,7 +412,12 @@ class Leetcode:
 Update time:  {tm}
 
 Auto created by [leetcode_cn_generate](https://github.com/ruanima/leetcode_cn_generate)
-Fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change leetcode domain to www.leetcode-cn.com.
+
+Fork from [bonfy](https://github.com/bonfy/leetcode)
+Chnages:
+- change leetcode domain to www.leetcode-cn.com
+- drop chromedriver requirement
+- download solutions with chinese translation
 
 I have solved **{num_solved}   /   {num_total}** problems
 while there are **{num_lock}** problems still locked.
