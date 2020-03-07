@@ -45,4 +45,4 @@ Python 3 have tested
 Python 2 maybe
 
 ## Changelog
-- 2020-03-07: fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change to www.leetcode-cn.com.
+- 2020-03-07: fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change domain to www.leetcode-cn.com.
