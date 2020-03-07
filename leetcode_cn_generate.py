@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-# Author: BONFY<ruan.lj@foxmail.com>
+# Author: ruan.lj@foxmail.com
 # Usage:  Leetcode solution downloader and auto generate readme
 
 import configparser
