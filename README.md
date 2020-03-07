@@ -10,8 +10,7 @@ $ pip3 install -r requorements.txt
 ## Config:
 
 Edit your own username, password, language and repo in the **config.cfg.example** file and then rename it to **config.cfg**.
-
-driverpath - Set the path of chromedriver. For Windows users, please include **chromedriver.exe** in path.
+Add `config.cfg` to your `.gitignore` file, to ignore this file from git.
 
 ```
 [leetcode]
