@@ -24,7 +24,7 @@ HOME = os.getcwd()
 CONFIG_FILE = os.path.join(HOME, 'config.cfg')
 DOMAIN = 'leetcode-cn.com'
 BASE_URL = 'https://{}'.format(DOMAIN)
-GRAPHQL_LIMIT = 20
+GRAPHQL_LIMIT = 100
 
 # If you have proxy, change PROXIES below
 PROXIES = None
