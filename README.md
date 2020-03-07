@@ -18,8 +18,8 @@ driverpath - Set the path of chromedriver. For Windows users, please include **c
 
 username = username
 password = password
-language = python
-repo = https://github.com/bonfy/leetcode
+language = python,javascript
+repo = https://github.com/ruanima/leetcode
 ```
 
 ## Run
