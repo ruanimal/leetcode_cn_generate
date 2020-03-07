@@ -1,23 +1,23 @@
+#!/usr/bin/env python
 # coding:utf-8
 
-#
 # Author: BONFY<ruan.lj@foxmail.com>
 # Usage:  Leetcode solution downloader and auto generate readme
-#
 
-import random
-import requests
 import configparser
-import os
+import functools
 import json
-import time
+import logging
+import os
+import random
 import re
 import sys
-import logging
-
-from pyquery import PyQuery as pq
-from collections import namedtuple, OrderedDict
+import time
+from collections import OrderedDict, namedtuple
 from itertools import groupby
+
+import requests
+from pyquery import PyQuery as pq
 
 
 HOME = os.getcwd()
@@ -38,10 +38,21 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'  # NOQA
 }
 
+ProgLang = namedtuple('ProgLang', ['language', 'ext', 'annotation'])
+ProgLangList = [ProgLang('c++', 'cpp', '//'),
+                ProgLang('java', 'java', '//'),
+                ProgLang('python', 'py', '#'),
+                ProgLang('c', 'c', '//'),
+                ProgLang('c#', 'cs', '//'),
+                ProgLang('javascript', 'js', '//'),
+                ProgLang('ruby', 'rb', '#'),
+                ProgLang('swift', 'swift', '//'),
+                ProgLang('go', 'go', '//')]
+
+ProgLangDict = dict((item.language, item) for item in ProgLangList)
+
 
 def retry(times=3):
-    import functools, time
-
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -52,7 +63,7 @@ def retry(times=3):
                     logging.warning('retrying function `%s`, args %s kwargs %s',
                         func.__name__, args, kwargs)
                     if i >= times - 1:
-                        # logger.exception(e)
+                        logging.exception(e)
                         raise
                     else:
                         time.sleep((i+1) * 0.5)
@@ -84,6 +95,8 @@ def get_config_from_file():
     rst = dict(username=username, password=password, language=language.lower(), repo=repo)
     return rst
 
+CONFIG = get_config_from_file()
+
 
 def rep_unicode_in_code(code):
     """
@@ -95,7 +108,7 @@ def rep_unicode_in_code(code):
     pattern = re.compile('(\\\\u[0-9a-zA-Z]{4})')
     m = pattern.findall(code)
     for item in set(m):
-        code = code.replace(item, chr(int(item[2:], 16)))    # item[2:]åŽ»æŽ‰\u
+        code = code.replace(item, chr(int(item[2:], 16)))  # item[2:]去掉\u
     return code
 
 
@@ -104,20 +117,13 @@ def check_and_make_dir(dirname):
         os.mkdir(dirname)
 
 
-ProgLang = namedtuple('ProgLang', ['language', 'ext', 'annotation'])
+@retry()
+def _query(session, method, uri, load_json=True, headers=None, **kw):
+    func = getattr(session, method.lower())
+    res = func(BASE_URL + uri, headers=headers, **kw)
+    assert res.ok
+    return json.loads(res.text) if load_json else res.text
 
-ProgLangList = [ProgLang('c++', 'cpp', '//'),
-                ProgLang('java', 'java', '//'),
-                ProgLang('python', 'py', '#'),
-                ProgLang('c', 'c', '//'),
-                ProgLang('c#', 'cs', '//'),
-                ProgLang('javascript', 'js', '//'),
-                ProgLang('ruby', 'rb', '#'),
-                ProgLang('swift', 'swift', '//'),
-                ProgLang('go', 'go', '//')]
-
-ProgLangDict = dict((item.language, item) for item in ProgLangList)
-CONFIG = get_config_from_file()
 
 class Solution:
     def __init__(self, index, title, capital_title, pass_language=None):
@@ -144,63 +150,10 @@ class QuizItem:
         return '<Quiz: {id}-{title}({difficulty})-{pass_status}>'.format(
             id=self.id, title=self.title, difficulty=self.difficulty, pass_status=self.pass_status)
 
-def md5(my_string):
-    import hashlib
-    if not isinstance(my_string, bytes):
-        b = my_string.encode('utf-8')
-    else:
-        b = my_string
-    m = hashlib.md5()
-    m.update(b)
-    return m.hexdigest()
-
-# import leveldb, uuid, os
-# class LevalCache(object):
-
-#     def __init__(self, name, store_path):
-#         if name is None:
-#             name = uuid.uuid4()
-#         self.name = name
-#         self.path = os.path.join(store_path, self.name)
-#         self.db = None
-
-#     def check_init_db(self):
-#         if self.db is None:
-#             path = self.path
-#             if not os.path.exists(path):
-#                 os.makedirs(path)
-#             self.db = leveldb.LevelDB(path)
-
-#     def get(self, key, default=None):
-#         self.check_init_db()
-#         try:
-#             data = self.db.Get(key.encode())
-#         except KeyError:
-#             return None or default
-#         return json.loads(data)
-
-#     def set(self, key, val):
-#         self.check_init_db()
-#         return self.db.Put(key.encode(), json.dumps(val).encode('utf8'))
-
-
-# cache = LevalCache('query', 'db')
-
-
-# @retry()
-def _query(session, method, uri, load_json=True, headers=None, **kw):
-    req_id = md5(json.dumps([method, uri, load_json, headers, kw], sort_keys=True))
-    func = getattr(session, method.lower())
-    res = func(BASE_URL + uri, headers=headers, **kw)
-    print('request: ', req_id, res.request.url, res.request.body, res.request.headers)
-    assert res.ok
-    result = json.loads(res.text) if load_json else res.text
-    return result
 
 class Leetcode:
 
     def __init__(self):
-
         # because only have capital_title in submissions
         # quick find the problem solution by itemdict[capital_title]
         self.itemdict = {}
@@ -226,33 +179,6 @@ class Leetcode:
         self.cookies = None
         self.is_login = False
 
-    def login(self):
-        if self.is_login:
-            return
-
-        if not CONFIG['username'] or not CONFIG['password']:
-            raise Exception('Leetcode - Please input your username and password in config.cfg.')
-
-        _query(self.session, 'GET', '/problemset/all/', load_json=False)  # get token
-        token = self.session.cookies['csrftoken']
-
-        data = {
-            "operationName":"signInWithPassword",
-            "query":"mutation signInWithPassword($data: AuthSignInWithPasswordInput!) {\n  authSignInWithPassword(data: $data) {\n    ok\n    __typename\n  }\n}\n",
-            "variables":{
-                "data":{
-                    "username": CONFIG['username'],
-                    "password": CONFIG['password'],
-                }
-            },
-        }
-        _query(self.session, 'POST', '/graphql/', json=data)  # log in
-
-        if not self.session.cookies.get('LEETCODE_SESSION'):
-            raise Exception('Login Error')
-        self.cookies = dict(self.session.cookies)
-        self.is_login = True
-
     def _generate_items_from_api(self, json_data):
         difficulty = {1: "Easy", 2: "Medium", 3: "Hard"}
         for quiz in json_data['stat_status_pairs']:
@@ -271,29 +197,6 @@ class Leetcode:
             data['article'] = quiz['stat']['question__title_slug']
             item = QuizItem(data)
             yield item
-
-    def load(self):
-        assert self.is_login
-
-        rst = _query(self.session, 'GET', '/api/problems/algorithms/')
-        if not rst['user_name']:
-            raise Exception("Something wrong with your personal info.\n")
-
-        self.num_solved = rst['num_solved']
-        self.num_total = rst['num_total']
-        items = list(self._generate_items_from_api(rst))
-        items.reverse()
-        titles = [item.capital_title for item in items]
-        self.itemdict = OrderedDict(zip(titles, items))
-        self.num_lock = len([i for i in items if i.lock])
-
-        # generate self.items
-        # use for generate readme
-        self.items = self.itemdict.values()
-
-        # generate self.solutions
-        # use for download code
-        self.solutions = [Solution(x.id, x.title, x.capital_title, x.pass_language) for x in self.itemdict.values() if x.pass_status]
 
     def _generate_submissions_by_solution(self, solution):
         """Generate the submissions by Solution item
@@ -347,7 +250,7 @@ class Leetcode:
             result = 'English:\n'
             result += pq(question['content']).text()
             result += '\n\n'
-            result += '中文:\n'
+            result += '涓�鏂�:\n'
             result += pq(question['translatedContent']).text()
             return result
 
@@ -380,6 +283,76 @@ class Leetcode:
             code = rep_unicode_in_code(code)
             yield language, question, code
 
+    def _download_solution(self, solution):
+        """ download solution by Solution item
+        :param solution: type Solution
+        """
+        print('{id}-{title} pass'.format(id=solution.id, title=solution.title))
+        self.download_code_to_dir(solution)
+        time.sleep(random.randint(0, 10) / 5)   # 防止拉取数据失败
+
+    def _get_solution_by_id(self, sid):
+        """ get solution by solution id
+        :param sid: type int
+        """
+        if not self.items:
+            raise Exception("Please load self info first")
+        for solution in self.solutions:
+            if solution.id == sid:
+                return solution
+        print("No solution id:{id} find in leetcode.please confirm".format(id=sid))
+        return
+
+    def login(self):
+        if self.is_login:
+            return
+
+        if not CONFIG['username'] or not CONFIG['password']:
+            raise Exception('Leetcode - Please input your username and password in config.cfg.')
+
+        _query(self.session, 'GET', '/problemset/all/', load_json=False)  # get token
+        token = self.session.cookies['csrftoken']
+
+        data = {
+            "operationName":"signInWithPassword",
+            "query":"mutation signInWithPassword($data: AuthSignInWithPasswordInput!) {\n  authSignInWithPassword(data: $data) {\n    ok\n    __typename\n  }\n}\n",
+            "variables":{
+                "data":{
+                    "username": CONFIG['username'],
+                    "password": CONFIG['password'],
+                }
+            },
+        }
+        _query(self.session, 'POST', '/graphql/', json=data)  # log in
+
+        if not self.session.cookies.get('LEETCODE_SESSION'):
+            raise Exception('Login Error')
+        self.cookies = dict(self.session.cookies)
+        self.is_login = True
+
+    def load(self):
+        assert self.is_login
+
+        rst = _query(self.session, 'GET', '/api/problems/algorithms/')
+        if not rst['user_name']:
+            raise Exception("Something wrong with your personal info.\n")
+
+        self.num_solved = rst['num_solved']
+        self.num_total = rst['num_total']
+        items = list(self._generate_items_from_api(rst))
+        items.reverse()
+        titles = [item.capital_title for item in items]
+        self.itemdict = OrderedDict(zip(titles, items))
+        self.num_lock = len([i for i in items if i.lock])
+
+        # generate self.items
+        # use for generate readme
+        self.items = self.itemdict.values()
+
+        # generate self.solutions
+        # use for download code
+        self.solutions = [Solution(x.id, x.title, x.capital_title, x.pass_language) for x in self.itemdict.values() if x.pass_status]
+
     def download_code_to_dir(self, solution):
         for language, question, code in self._get_code_by_solution_and_language(solution):
             if not question and not code:
@@ -410,26 +383,6 @@ class Leetcode:
                 content += '\n'
                 f.write(content)
 
-    def _download_solution(self, solution):
-        """ download solution by Solution item
-        :param solution: type Solution
-        """
-        print('{id}-{title} pass'.format(id=solution.id, title=solution.title))
-        self.download_code_to_dir(solution)
-        time.sleep(random.randint(0, 10) / 5)   # 避免数据拉取失败
-
-    def _get_solution_by_id(self, sid):
-        """ get solution by solution id
-        :param sid: type int
-        """
-        if not self.items:
-            raise Exception("Please load self info first")
-        for solution in self.solutions:
-            if solution.id == sid:
-                return solution
-        print("No solution id:{id} find in leetcode.please confirm".format(id=sid))
-        return
-
     def download_by_id(self, sid):
         """ download one solution by solution id
         :param sid: type int
@@ -458,7 +411,8 @@ class Leetcode:
         md = '''# :pencil2: Leetcode Solutions with {language}
 Update time:  {tm}
 
-Auto created by [leetcode_generate](https://github.com/bonfy/leetcode) [Usage](https://github.com/bonfy/leetcode/blob/master/README_leetcode_generate.md)
+Auto created by [leetcode_cn_generate](https://github.com/ruanima/leetcode_cn_generate)
+Fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change leetcode domain to www.leetcode-cn.com.
 
 I have solved **{num_solved}   /   {num_total}** problems
 while there are **{num_lock}** problems still locked.
