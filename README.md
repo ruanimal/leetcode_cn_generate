@@ -1,7 +1,7 @@
 # leetcode_cn_generate Usage
 ![](demo/leetcode.gif)
 
-## Demo
+## Sample
 https://github.com/ruanima/leetcode
 
 ## Preparements:
