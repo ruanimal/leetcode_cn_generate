@@ -5,7 +5,7 @@
 https://github.com/ruanima/leetcode
 
 ## Preparements:
-Install essential packages: `requests`, `pyquery`
+Install essential packages
 ```cmd
 $ pip3 install -r requorements.txt
 ```
@@ -39,8 +39,24 @@ python3 leetcode_cn_generate.py 1
 python3 leetcode_cn_generate.py 1 10 100
 ```
 You can only download the solution you want.
+
 Just add the id arguments behind (seperate by space)
 
+### Generate Readme
+```
+python3 leetcode_cn_generate.py --readme
+```
+By default, readme.md will be generated when the download is complated.
+
+You can also bypass downloading then generate readme.md, by scanning source code of solutions in the `questions` directory.
+
+### Login with LEETCODE_SESSION
+```
+python3 leetcode_cn_generate.py --session LEETCODE_SESSION
+```
+Use a token(LEETCODE_SESSION) instead of a password to log in. The token can be found from the browser's devtools.
+
+Logging in with a token prevents session invalidation in the browser.
 
 ## Attention
 Python 3 have tested
@@ -49,3 +65,5 @@ Python 2 maybe
 
 ## Changelog
 - 2020-03-07: fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change domain to www.leetcode-cn.com.
+- 2022-03-14: fix download bugs, change download directory from current directory to `questions`, change readme generating logic.
+- 2022-03-15: add argparser, add token login support

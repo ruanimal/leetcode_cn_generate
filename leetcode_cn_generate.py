@@ -68,7 +68,7 @@ def retry(times=3):
                         logging.exception(e)
                         raise
                     else:
-                        time.sleep((i+1) * 0.5)
+                        time.sleep((i+1)*3)
         return wrapper
     return decorator
 
@@ -82,10 +82,6 @@ def get_config_from_file():
 
     username = cp.get('leetcode', 'username')
     password = cp.get('leetcode', 'password')
-
-    if not username or not password:    # username and password not none
-        raise ValueError('Please input your username and password in config.cfg.')
-
     language = cp.get('leetcode', 'language')
     if not language:
         language = 'python'    # language default python
@@ -125,6 +121,7 @@ def _query(session, method, uri, load_json=True, headers=None, **kw):
     res = func(BASE_URL + uri, headers=headers, **kw)
     if not res.ok:
         print(res.text)
+        print(res.headers)
     assert res.ok
     return json.loads(res.text) if load_json else res.text
 
@@ -304,7 +301,7 @@ class Leetcode:
         """
         print('{id}-{title} pass'.format(id=solution.id, title=solution.title))
         self.download_code_to_dir(solution)
-        time.sleep(random.randint(0, 10) / 5)   # 防止拉取数据失败
+        time.sleep(random.randint(0, 10) / 10)   # 防止拉取数据失败
 
     def _get_solution_by_id(self, sid):
         """ get solution by solution id
@@ -326,15 +323,16 @@ class Leetcode:
                 res.append(i)
         return res
 
-    def login(self):
+    def login(self, session=None):
         if self.is_login:
+            return
+        if session:
+            self.session.cookies['LEETCODE_SESSION'] = session
+            self.is_login = True
             return
 
         if not CONFIG['username'] or not CONFIG['password']:
             raise Exception('Leetcode - Please input your username and password in config.cfg.')
-
-        _query(self.session, 'GET', '/problemset/all/', load_json=False)  # get token
-        token = self.session.cookies['csrftoken']
 
         data = {
             "operationName":"signInWithPassword",
@@ -379,6 +377,8 @@ class Leetcode:
     def download_code_to_dir(self, solution):
         for language, question, code in self._get_code_by_solution_and_language(solution):
             if not question and not code:
+                continue
+            if language not in self.prolangdict:
                 continue
             dirname = os.path.join(QUESTIONS, '{id}-{title}'.format(id=str(solution.id).zfill(3), title=solution.title))
             print('begin download', dirname, language)
@@ -487,35 +487,42 @@ If you are loving solving problems in leetcode, please contact me to enjoy it to
             f.write(md)
 
 
-def main():
+def main(args):
     leetcode = Leetcode()
-    leetcode.login()
+    leetcode.login(args.session)
     print('Leetcode login')
     leetcode.load()
     print('Leetcode load self info')
 
-    if len(sys.argv) == 1:
-        # simple download
-        # leetcode.download()
-
-        # we use multi thread
-        print('download all leetcode solutions')
-        leetcode.download_with_thread_pool()
-        print('Leetcode finish dowload')
-        leetcode.write_readme()
-        print('Leetcode finish write readme')
-    elif sys.argv[1] == 'readme':
-        leetcode.write_readme()
-        print('Leetcode finish write readme')
-    else:
+    if args.sid:
         for sid in sys.argv[1:]:
             print('begin leetcode by id: {id}'.format(id=sid))
             leetcode.download_by_id(int(sid))
+        print('Leetcode finish dowload')
+        leetcode.write_readme()
+        print('Leetcode finish write readme')
+    elif args.readme:
+        leetcode.write_readme()
+        print('Leetcode finish write readme')
+    else:
+        # simple download
+        leetcode.download()
+
+        # # we use multi thread
+        # print('download all leetcode solutions')
+        # leetcode.download_with_thread_pool()
+
+        print('Leetcode finish dowload')
         leetcode.write_readme()
         print('Leetcode finish write readme')
 
 
-
-
 if __name__ == '__main__':
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--readme', help='Update README.md', action='store_true')
+    parser.add_argument('--session', help='Login with LEETCODE_SESSION')
+    parser.add_argument('sid', help='question id', nargs='*')
+    args = parser.parse_args()
+    main(args)
