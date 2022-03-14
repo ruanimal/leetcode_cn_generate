@@ -1,6 +1,9 @@
 # leetcode_cn_generate Usage
 ![](demo/leetcode.gif)
 
+## Demo
+https://github.com/ruanima/leetcode
+
 ## Preparements:
 Install essential packages: `requests`, `pyquery`
 ```cmd
