@@ -33,7 +33,7 @@ python3 leetcode_cn_generate.py
 ```
 Usually you can always run fully download
 
-### Download by id
+### Download By id
 ```
 python3 leetcode_cn_generate.py 1
 python3 leetcode_cn_generate.py 1 10 100
@@ -41,6 +41,13 @@ python3 leetcode_cn_generate.py 1 10 100
 You can only download the solution you want.
 
 Just add the id arguments behind (seperate by space)
+
+### Download Start From id
+```
+python3 leetcode_cn_generate.py --sid-start 100
+```
+
+You can only download the solution start from which you want.
 
 ### Generate Readme
 ```
@@ -50,7 +57,7 @@ By default, readme.md will be generated when the download is complated.
 
 You can also bypass downloading then generate readme.md, by scanning source code of solutions in the `questions` directory.
 
-### Login with LEETCODE_SESSION
+### Login With LEETCODE_SESSION
 ```
 python3 leetcode_cn_generate.py --session LEETCODE_SESSION
 ```
@@ -67,3 +74,4 @@ Python 2 maybe
 - 2020-03-07: fork from [bonfy](https://github.com/bonfy/leetcode), drop chromedriver requirement, change domain to www.leetcode-cn.com.
 - 2022-03-14: fix download bugs, change download directory from current directory to `questions`, change readme generating logic.
 - 2022-03-15: add argparser, add token login support
+- 2022-03-25: fix bugs, add `sid-start` option, add `FILE_EXPIRE`
