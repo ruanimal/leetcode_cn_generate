@@ -2,7 +2,7 @@
 ![](demo/leetcode.gif)
 
 ## Sample
-https://github.com/ruanima/leetcode
+https://github.com/ruanimal/leetcode
 
 ## Preparements:
 Install essential packages
@@ -22,7 +22,7 @@ Add `config.cfg` to your `.gitignore` file, to ignore this file from git.
 username = username
 password = password
 language = python,javascript
-repo = https://github.com/ruanima/leetcode
+repo = https://github.com/ruanimal/leetcode
 ```
 
 ## Run

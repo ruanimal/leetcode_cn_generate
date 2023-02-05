@@ -454,7 +454,7 @@ class Leetcode:
         md = '''# :pencil2: Leetcode Solutions with {language}
 Update time:  {tm}
 
-Auto created by [leetcode_cn_generate](https://github.com/ruanima/leetcode_cn_generate)
+Auto created by [leetcode_cn_generate](https://github.com/ruanimal/leetcode_cn_generate)
 
 Fork from [bonfy](https://github.com/bonfy/leetcode)
 
